@@ -7,14 +7,28 @@ include_once('app/Model/UserModel.php');
         public function index(){
             $modelo=new UserModel();
             $datos=$modelo->getAll();
-            $vista="app/View/admin/users/IndexUserView.php";
-            include_once("app/View/admin/PlantillaView.php");
+            session_start();
+            if(isset($_SESSION['logedin'])&&$_SESSION['logedin']==true){
+            //incluimos al archivo de la plantilla para que éste sea llamado y lleve como variable a vista
+                $vista="app/View/admin/users/IndexUserView.php";
+                include_once("app/View/admin/PlantillaView.php");
+            }else{
+                $vista="app/View/admin/HomeView.php";
+                include_once("app/View/admin/Plantilla2View.php");
+            }
         }
 
         //creamos el metodo para manadar a llamar a la vista de agregar usuario
         public function CallFormAdd(){
-            $vista='app/View/admin/users/AddUserView.php';
-            include_once('app/View/admin/PlantillaView.php');
+            session_start();
+            if(isset($_SESSION['logedin'])&&$_SESSION['logedin']==true){
+            //incluimos al archivo de la plantilla para que éste sea llamado y lleve como variable a vista
+                $vista='app/View/admin/users/AddUserView.php';
+                include_once("app/View/admin/PlantillaView.php");
+            }else{
+                $vista="app/View/admin/HomeView.php";
+                include_once("app/View/admin/Plantilla2View.php");
+            }
         }
 
         //creamos el metodo para agregar un usuario
@@ -78,8 +92,16 @@ include_once('app/Model/UserModel.php');
                 $modelo=new UserModel();
                 $datos=$modelo->getById($id);
                 //llamamos a la vista de editar usuario
-                $vista='app/View/admin/users/EditUserView.php';
-                include_once('app/View/admin/PlantillaView.php');
+                
+                session_start();
+            if(isset($_SESSION['logedin'])&&$_SESSION['logedin']==true){
+            //incluimos al archivo de la plantilla para que éste sea llamado y lleve como variable a vista
+            $vista='app/View/admin/users/EditUserView.php';
+                include_once("app/View/admin/PlantillaView.php");
+            }else{
+                $vista="app/View/admin/HomeView.php";
+                include_once("app/View/admin/Plantilla2View.php");
+            }
             }
         }
         //Creamos el metodo para editar un usuario
@@ -94,7 +116,7 @@ include_once('app/Model/UserModel.php');
                     'usuario'=>$_POST['usuario'],
                     'password'=>$_POST['password'],
                     'puesto'=>$_POST['puesto'],
-                    'avatar'=>$_POST['avatar']
+                    'avatar'=>$_POST['ava']
                 );
                 //rescatamos la imagen y la procesamos
                 if(isset($_FILES['avatar']) && $_FILES['avatar']['error']===UPLOAD_ERROR_OK){
@@ -131,6 +153,8 @@ include_once('app/Model/UserModel.php');
                         unlink('app/src/img/avatars/'.$anterior['avatar']);
                     }
                     $datos['avatar']=$nombreArchivo;
+                }else{
+                    $datos['avatar']=$_POST['ava'];
                 }
                 //llamamos al metodo del modelo que actualiza los datos del usuario
                 $modelo=new UserModel();
@@ -147,11 +171,48 @@ include_once('app/Model/UserModel.php');
             if($_SERVER['REQUEST_METHOD']=='GET'){
                 //obtenemos el id del usuario a eliminar
                 $id=$_GET['id'];
+                //creo la instancia para obtener los datos a eliminar
+                $this->modelo=new UserModel();
+                $anterior=$this->modelo->getById($id);
+
                 //llamamos al metodo del modelo que elimina al usuario de la base de datos
                 $modelo=new UserModel();
                 $modelo->deleteRow($id);
-                //redireccionamos al index de usuarios
+                if(!empty($anterior['avatar'])){
+                    unlink('app/src/img/avatars/'.$anterior['avatar']);
+                }                //redireccionamos al index de usuarios
                 header("Location:http://localhost/php-appweb/?c=UserController&m=index");
+            }
+        }
+
+        public function CallFormLogin(){
+            
+            session_start();
+            if(isset($_SESSION['logedin'])&&$_SESSION['logedin']==true){
+            //incluimos al archivo de la plantilla para que éste sea llamado y lleve como variable a vista
+            $vista="app/View/admin/LoginView.php";
+                include_once("app/View/admin/PlantillaView.php");
+            }else{
+                $vista="app/View/admin/LoginView.php";
+                include_once("app/View/admin/Plantilla2View.php");
+            }
+        }
+        public function Login(){
+            if($_SERVER['REQUEST_METHOD']=='POST'){
+                $this->modelo=new UserModel();
+                $usuario=$this->modelo->getCredentials($_POST['user'],$_POST['password']);
+                if($usuario==false){
+                    $vista="app/View/admin/LoginView.php";
+                    include_once("app/View/admin/Plantilla2View.php");
+                }else{
+                    session_start();
+                    $_SESSION['logedin']=true;
+                    $_SESSION['avatar']=$usuario['avatar'];
+                    $_SESSION['nombre']=$usuario['nombre'];
+
+                    $vista="app/View/admin/HomeView.php";
+                    include_once("app/View/admin/PlantillaView.php");
+                }
             }
         }
     }

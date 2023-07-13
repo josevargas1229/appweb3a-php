@@ -52,9 +52,10 @@
     </p>
     <p>
       <label for="avatar">Avatar de usuario : </label><br>
-      <input type="file" name="avatar" id="avatar" accept="image/*" value="<?=$datos['avatar']?>">
+      <input type="file" name="avatar" id="avatar" accept="image/*" >
     </p>
     <p>
+      <input type="hidden" name="ava" value="<?= $datos['avatar']?>">
       <input
         type="hidden"
         name="idUsuarios"
